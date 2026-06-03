@@ -1,0 +1,31 @@
+{
+  "historial": [
+    {
+      "role": "assistant",
+      "content": "¿Quieres saber cómo las neuronas envían señales en el cuerpo? Puedo explicártelo de forma sencilla y divertida. ¿Te gustaría?"
+    },
+    {
+      "role": "user",
+      "content": "Yo"
+    },
+    {
+      "role": "assistant",
+      "content": "¡Hola! ¿Quieres aprender algo divertido sobre cómo funciona la inteligencia artificial o cómo se programa un robot? Puedo ayudarte."
+    },
+    {
+      "role": "user",
+      "content": "Holi Gia"
+    },
+    {
+      "role": "assistant",
+      "content": "¡Hola! ¿Qué tal? Hoy puedo enseñarte cómo una IA como yo aprende a hablar. ¿Te interesa?"
+    }
+  ],
+  "memoria": {
+    "nombre": null,
+    "gustos": [
+      "ia",
+      "programación"
+    ]
+  }
+}
