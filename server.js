@@ -14,6 +14,8 @@ const HF_TOKEN = process.env.HF_TOKEN;
 const MAX_HISTORY = 2;
 
 let hayNuevaRespuesta = false;
+let ultimaConexionHardware = 0;
+let appActiva = false; // Rastrea si el usuario tiene la app abierta
 
 const SYSTEM_PROMPT = `
 Eres GIA, una asistente educativa y amigable para niños.
@@ -236,6 +238,35 @@ async function enviarAudioAlESP32(filePath) {
 */
 app.use("/voz.mp3", express.static(path.join(__dirname, "voz.mp3")));
 
+// --- RUTA PARA EL ESP32: Avisar que sigue vivo y preguntar el ritmo ---
+app.post("/hardware-heartbeat", (req, res) => {
+    ultimaConexionHardware = Date.now();
+    
+    // Le responde al ESP32 si debe ir rápido (rafaga) o lento (reposo)
+    res.json({ 
+        status: "alive", 
+        modoRafaga: appActiva 
+    });
+});
+
+// --- RUTA PARA LA APP: Avisar que el usuario abrió el chat ---
+app.post("/app-activa", (req, res) => {
+    appActiva = req.body.activa; // true o false
+    res.json({ status: "ok", modoRafaga: appActiva });
+});
+
+// --- RUTA PARA LA APP: Doble verificación al abrir la app ---
+app.get("/verificar-ecosistema", (req, res) => {
+    const ahora = Date.now();
+    // En reposo consideramos online si latió hace menos de 2.5 minutos (150000 ms)
+    // En ráfaga, exigimos que haya latido hace menos de 6 segundos
+    const margenAceptable = appActiva ? 6000 : 150000;
+    const estaOnline = (ahora - ultimaConexionHardware) < margenAceptable;
+
+    res.json({ 
+        hardwareOnline: estaOnline 
+    });
+});
 
 app.post("/procesar", async (req, res) => {
 
