@@ -291,6 +291,13 @@ if (audioPath) {
     });
 });
 
+app.get("/status", (req, res) => {
+    res.json({ 
+        online: true, 
+        message: "El servidor de GIA está despierto y listo." 
+    });
+});
+
 app.get("/alerta-esp32", (req, res) => {
     res.json({
         nuevaRespuesta: hayNuevaRespuesta
