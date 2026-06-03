@@ -16,6 +16,7 @@ const MAX_HISTORY = 2;
 let hayNuevaRespuesta = false;
 let ultimaConexionHardware = 0;
 let appActiva = false; // Rastrea si el usuario tiene la app abierta
+let ultimaPeticionApp = 0;
 
 const SYSTEM_PROMPT = `
 Eres GIA, una asistente educativa y amigable para niños.
@@ -242,7 +243,14 @@ app.use("/voz.mp3", express.static(path.join(__dirname, "voz.mp3")));
 app.post("/hardware-heartbeat", (req, res) => {
     ultimaConexionHardware = Date.now();
     
-    // Le responde al ESP32 si debe ir rápido (rafaga) o lento (reposo)
+    // 🚀 SISTEMA DE SEGURIDAD AUTO-APAGADO
+    // Si 'appActiva' es true, pero han pasado más de 20 segundos sin que el teléfono 
+    // procese texto o mande un latido de actividad, la apagamos a la fuerza.
+    if (appActiva && (Date.now() - ultimaPeticionApp > 20000)) {
+        appActiva = false;
+        console.log("[🛡️ SEGURIDAD SERVER] La app se cerró de golpe o no responde. Desactivando ráfaga forzosamente.");
+    }
+    
     res.json({ 
         status: "alive", 
         modoRafaga: appActiva 
@@ -252,6 +260,10 @@ app.post("/hardware-heartbeat", (req, res) => {
 // --- RUTA PARA LA APP: Avisar que el usuario abrió el chat ---
 app.post("/app-activa", (req, res) => {
     appActiva = req.body.activa; // true o false
+    if (appActiva) {
+        ultimaPeticionApp = Date.now(); // Registramos el instante de actividad
+    }
+    console.log(`[APP] Cambió estado de actividad a: ${appActiva}`);
     res.json({ status: "ok", modoRafaga: appActiva });
 });
 
@@ -269,13 +281,12 @@ app.get("/verificar-ecosistema", (req, res) => {
 });
 
 app.post("/procesar", async (req, res) => {
-
+    ultimaPeticionApp = Date.now(); // Cada mensaje del niño cuenta como actividad en la app
+    appActiva = true; 
+    
     const textoRecibido = req.body.texto;
-
     if (!textoRecibido) {
-        return res.status(400).json({
-            error: "Falta el texto"
-        });
+        return res.status(400).json({ error: "Falta el texto" });
     }
 
     const respuesta = await preguntarIA(textoRecibido);
@@ -299,12 +310,11 @@ app.get("/status", (req, res) => {
 });
 
 app.get("/alerta-esp32", (req, res) => {
-    res.json({
-        nuevaRespuesta: hayNuevaRespuesta
-    });
-    if (hayNuevaRespuesta) {
+    const respuestaParaEnviar = hayNuevaRespuesta;
     hayNuevaRespuesta = false;
-}
+    res.json({
+        nuevaRespuesta: respuestaParaEnviar
+    });
 });
 
 cargarDatos();
