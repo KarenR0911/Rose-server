@@ -172,7 +172,6 @@ async function preguntarIA(texto) {
     }
 }
 
-const path = require("path");
 async function generarTTS(texto, fileName = "voz.mp3") {
     texto = limitarTextoTTS(texto);
     try {
